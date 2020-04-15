@@ -1,0 +1,20 @@
+// Parse simple pattern of Darklist.de raw IP format:
+$srcp = <<<PATTERN_END
+LD*:indicatorValue    
+EOL
+PATTERN_END;
+
+$hostPattern = <<<PATTERN_END
+(IPV4:clientIpv4 | [! \n]+:host)
+EOS
+PATTERN_END;
+
+// function to handle any oddly formatted IP addresses, uses $hostPattern above
+$getHost(iVal) = PARSE($hostPattern, REPLACE($iVal, '[.]', '.') );
+
+// execute main query:
+PARSE(pattern:$srcp, src:'https://darklist.de/raw.php')
+| select($getHost(indicatorValue) as hostVal) 
+| select(hostVal[clientIpv4] as ipv4)
+| filter(ipv4 is not null) 
+;

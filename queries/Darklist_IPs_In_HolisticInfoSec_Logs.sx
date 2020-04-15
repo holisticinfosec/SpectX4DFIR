@@ -1,0 +1,15 @@
+@access_logs = PARSE(pattern:FETCH('file:/C:/logs/patterns/apacheLog.sxp'),
+                src:'file:/C:/logs/holisticinfosec.io-*');
+
+// get IPv4 addresses recommended for traffic reviewing from US-CERT bad ip list:
+@suspected_list = @[Darklist_View.sx]
+//| filter(type = 'IPV4ADDR') 
+| select(ipv4);
+
+// execute main query:
+@access_logs
+| filter(clientIp IN (@suspected_list))     // we're interested only in records with suspected ip addresses
+| select(timestamp,                         // select relevant fields
+      clientIp,
+      CC(clientIp), ASN_NAME(clientIp), GEOPOINT(clientIp),  // enrich data with geoip, ASN, and geopoint lat/long for map visualization
+      text);
